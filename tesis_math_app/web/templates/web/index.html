@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Tesis Math App - Simulador</title>
+    <style>
+        :root {
+            --verde-principal: #4DD161;
+            --azul-acento: #4DBDD1;
+        }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        header { background-color: var(--verde-principal); color: white; padding: 1rem; text-align: center; }
+        .container { display: flex; flex: 1; }
+        .sidebar { width: 300px; background-color: #f4f4f4; padding: 20px; border-right: 3px solid var(--azul-acento); }
+        .main-content { flex: 1; padding: 20px; text-align: center; }
+        .btn-simular { background-color: var(--verde-principal); border: none; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Simulador de Fluidos en Medios Porosos</h1>
+    </header>
+    <div class="container">
+        <div class="sidebar">
+            <h3>Parámetros de Entrada</h3>
+            <p>Aquí irán los campos de permeabilidad (k1, k2), tiempo y saturación[cite: 32, 35].</p>
+        </div>
+        <div class="main-content">
+            <h2>Resultados de Simulación</h2>
+            <div id="grafica-area" style="border: 2px dashed #ccc; height: 400px; display: flex; align-items: center; justify-content: center;">
+                Las gráficas de Plotly se mostrarán aquí[cite: 46].
+            </div>
+        </div>
+    </div>
+</body>
+</html>
