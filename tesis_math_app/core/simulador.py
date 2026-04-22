@@ -14,8 +14,7 @@ def ejecutar_simulacion(params):
     Tmax = params.get('Tmax', 5000)
     dt = params.get('dt', 1)
     Sw_inj = params.get('Sw_inj', 0.372)
-    Sw_ini = params.get('Sw_ini', 0.72)
-
+     
     # -------------------------------
     # PARÁMETROS Y CONDICIONES INICIALES
     # -------------------------------

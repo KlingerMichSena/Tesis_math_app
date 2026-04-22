@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <meta charset="UTF-8">
     <title>Tesis Math App - Simulador</title>
     <style>
@@ -20,17 +21,63 @@
     <header>
         <h1>Simulador de Fluidos en Medios Porosos</h1>
     </header>
-    <div class="container">
-        <div class="sidebar">
-            <h3>Parámetros de Entrada</h3>
-            <p>Aquí irán los campos de permeabilidad (k1, k2), tiempo y saturación[cite: 32, 35].</p>
+
+    <div class="container" style="display: flex;">
+        
+        <div class="sidebar" style="width: 350px; background-color: #f8f9fa; padding: 20px; border-right: 3px solid #4DBDD1;">
+            <h3>Configuración del Modelo</h3>
+            
+            <form method="post" id="form-metodo">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="id_metodo">Seleccione el Método:</label>
+                    <select name="metodo" id="id_metodo" onchange="this.form.submit()" class="form-control">
+                        <option value="">--- Seleccione ---</option>
+                        <option value="CN" {% if form.cleaned_data.metodo == 'CN' %}selected{% endif %}>Crank-Nicolson</option>
+                        <option value="DF">Diferencias Finitas (Pendiente)</option>
+                    </select>
+                </div>
+
+                <hr>
+
+                {% if form.cleaned_data.metodo == 'CN' %}
+                    <div id="campos-crank">
+                        <h4>Parámetros de Entrada</h4>
+                        <div class="campos-grid">
+                            {{ form.k1.label_tag }} {{ form.k1 }}
+                            {{ form.k2.label_tag }} {{ form.k2 }}
+                            {{ form.t_max.label_tag }} {{ form.t_max }}
+                            {{ form.dt.label_tag }} {{ form.dt }}
+                            {{ form.sw_inj.label_tag }} {{ form.sw_inj }}
+                            {{ form.sw_ini.label_tag }} {{ form.sw_ini }}
+                        </div>
+                        
+                        <button type="submit" name="ejecutar" class="btn-simular" style="background-color: #4DD161; color: white; width: 100%; margin-top: 20px; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">
+                            Calcular Resultados
+                        </button>
+                    </div>
+                {% endif %}
+            </form>
+
+            {% if mensaje %}
+                <p style="color: #d9534f; margin-top: 15px;">{{ mensaje }}</p>
+            {% endif %}
         </div>
+
         <div class="main-content">
-            <h2>Resultados de Simulación</h2>
-            <div id="grafica-area" style="border: 2px dashed #ccc; height: 400px; display: flex; align-items: center; justify-content: center;">
-                Las gráficas de Plotly se mostrarán aquí[cite: 46].
+            <h2>Visualización de Resultados</h2>
+            <div id="grafica-area">
+                {% if grafica %}
+                    {{ grafica|safe }}
+                {% else %}
+                    <div style="padding: 50px; border: 2px dashed #4DBDD1; color: #666;">
+                        Esperando parámetros para generar simulación...
+                    </div>
+                {% endif %}
             </div>
         </div>
+
     </div>
 </body>
 </html>
