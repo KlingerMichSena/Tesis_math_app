@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <meta charset="UTF-8">
     <title>Tesis Math App - Simulador</title>
     <style>
@@ -64,13 +65,15 @@
             {% endif %}
         </div>
 
-        <div class="main-content" style="flex: 1; padding: 20px;">
+        <div class="main-content">
             <h2>Visualización de Resultados</h2>
-            <div id="grafica-container">
-                {% if resultados %}
-                    <p>Datos listos para graficar...</p>
-                    {% else %}
-                    <p>Seleccione el método y presione "Calcular" para ver los resultados.</p>
+            <div id="grafica-area">
+                {% if grafica %}
+                    {{ grafica|safe }}
+                {% else %}
+                    <div style="padding: 50px; border: 2px dashed #4DBDD1; color: #666;">
+                        Esperando parámetros para generar simulación...
+                    </div>
                 {% endif %}
             </div>
         </div>
