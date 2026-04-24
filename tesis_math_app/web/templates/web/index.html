@@ -75,6 +75,12 @@
             <div id="grafica-area">
                 {% if grafica %}
                     {{ grafica|safe }}
+                    
+                    {% if grafica_velocidad %}
+                        <div class="mt-4" style="margin-top: 2rem;">
+                            {{ grafica_velocidad|safe }}
+                        </div>
+                    {% endif %}
                 {% else %}
                     <div style="padding: 50px; border: 2px dashed #4DBDD1; color: #666;">
                         Esperando parámetros para generar simulación...

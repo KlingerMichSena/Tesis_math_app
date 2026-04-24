@@ -32,7 +32,7 @@ def index(request):
         fig.add_trace(go.Scatter(x=res['x'], y=res['Sw2'], name='Capa 2 (Sw2)', line=dict(color='#4DBDD1')))
         
         fig.update_layout(
-            title="Perfiles de frende",
+            title="Perfiles de Frente",
             xaxis_title="Distancia [m]",
             yaxis_title="Saturación (Sw)",
             template="plotly_white"
@@ -61,7 +61,6 @@ def index(request):
 
     return render(request, 'web/index.html', {
         'form': form,
-        'grafica': grafica_html
         'grafica': grafica_html,
         'grafica_velocidad': grafica_velocidad_html
     })
