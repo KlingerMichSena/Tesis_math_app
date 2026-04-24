@@ -2,7 +2,6 @@
 # In[1]:
 import numpy as np
 import matplotlib.pyplot as plt
-from IPython.display import clear_output
 from scipy.linalg import solve_banded
 
 # Encapsulamos todo en una función que recibe un diccionario de parámetros
@@ -14,18 +13,17 @@ def ejecutar_simulacion(params):
     Tmax = params.get('Tmax', 5000)
     dt = params.get('dt', 1)
     Sw_inj = params.get('Sw_inj', 0.372)
+    Sw_ini = params.get('Sw_ini', 0.72)
+    Sw_star = params.get('Sw_star', 0.37)
+    window_size = params.get('window_size', 12) #Tamaño de ventana para suavizado
      
     # -------------------------------
     # PARÁMETROS Y CONDICIONES INICIALES
     # -------------------------------
-    phi = 0.25
     Swc = 0.2
     Sgr = 0.18
     mu_w = 1e-3
     mu_g = 2e-5
-    k1 = 2e-11
-    k2 = 10e-12
-    Sw_star = 0.37
     A = 400
     sigma = 0.03
     c = 0.01
@@ -39,12 +37,7 @@ def ejecutar_simulacion(params):
     Nx = 200
     x = np.linspace(0, L, Nx)
     dx = L / Nx
-    Tmax = 5000
-    dt = 1
     Nt = int(Tmax / dt)
-
-    Sw_inj = 0.372
-    Sw_ini = 0.72
 
     # Saturaciones
     Sw1 = np.ones(Nx) * Sw_ini
@@ -86,7 +79,7 @@ def ejecutar_simulacion(params):
         lg = k * krg(Sw, nD) / mu_g
         return lw / (lw + lg + 1e-12)
 
-    def suavizar_nD(nD, window_size=12):
+    def suavizar_nD(nD, window_size=window_size):
         nD_suave = nD.copy()
         for i in range(1, len(nD) - 1):
             ini = max(0, i - window_size // 2)
@@ -109,9 +102,9 @@ def ejecutar_simulacion(params):
     def construir_rhs_CN(Sw_old, adv, D, phi, dt, dx):
         alpha = D * dt / (2 * phi * dx**2)
         rhs = Sw_old.copy()
-        for i in range(1, Nx - 1):
-            rhs[i] += dt * adv[i] / phi
-            rhs[i] += alpha * (Sw_old[i+1] - 2*Sw_old[i] + Sw_old[i-1])
+        # Vectorización (reemplaza el ciclo for lento de Python)
+        rhs[1:-1] += dt * adv[1:-1] / phi
+        rhs[1:-1] += alpha * (Sw_old[2:] - 2*Sw_old[1:-1] + Sw_old[:-2])
         rhs[0] = Sw_inj
         rhs[-1] = Sw_old[-1]
         return rhs
@@ -149,6 +142,11 @@ def ejecutar_simulacion(params):
     # -------------------------------
     # SIMULACIÓN
     # -------------------------------
+    # Movemos la construcción de las matrices A1 y A2 fuera del ciclo temporal
+    # ya que sus valores no cambian y redibujarlas 5000 veces quita tiempo
+    A1 = construir_matriz_CN(Nx, D1, phi, dt, dx)
+    A2 = construir_matriz_CN(Nx, D2, phi, dt, dx)
+
     for step in range(Nt):
         t = step * dt
 
@@ -162,14 +160,12 @@ def ejecutar_simulacion(params):
 
         adv1 = np.zeros(Nx)
         adv2 = np.zeros(Nx)
-        for i in range(1, Nx):
-            adv1[i] = -u1 * (fw1[i] - fw1[i-1]) / dx - theta_s * (Sw1[i] - Sw2[i])
-            adv2[i] = -u2 * (fw2[i] - fw2[i-1]) / dx + theta_s * (Sw1[i] - Sw2[i])
+        # Vectorización de advección (sin ciclo for)
+        adv1[1:] = -u1 * (fw1[1:] - fw1[:-1]) / dx - theta_s * (Sw1[1:] - Sw2[1:])
+        adv2[1:] = -u2 * (fw2[1:] - fw2[:-1]) / dx + theta_s * (Sw1[1:] - Sw2[1:])
 
-        A1 = construir_matriz_CN(Nx, D1, phi, dt, dx)
         b1 = construir_rhs_CN(Sw1, adv1, D1, phi, dt, dx)
 
-        A2 = construir_matriz_CN(Nx, D2, phi, dt, dx)
         b2 = construir_rhs_CN(Sw2, adv2, D2, phi, dt, dx)
 
         Sw1 = solve_banded((1, 1), A1, b1)
@@ -184,8 +180,9 @@ def ejecutar_simulacion(params):
         tiempos.append(t)
 
         # Animación
-        if step % 200 == 0 and step > 0:
-            clear_output(wait=True)
+        # Se desactiva la animación en consola porque Django es un entorno web 
+        # y clear_output/plt generan errores o consumen toda la memoria RAM.
+        """if step % 200 == 0 and step > 0:
 
             # Suavizar perfiles
             vent_espacial = 20
@@ -238,13 +235,23 @@ def ejecutar_simulacion(params):
             ax2.grid()
 
             plt.tight_layout()
-            #plt.show()
+            #plt.show()"""
 
     # -------------------------------
     # VELOCIDADES PROMEDIO DEL FRENTE
     # -------------------------------
     velocidad_sw1 = np.diff(posiciones_sw1) / dt
     velocidad_sw2 = np.diff(posiciones_sw2) / dt
+
+    # Suavizar las velocidades para limpiar el ruido numérico en la interfaz web
+    vent_vel = min(150, len(velocidad_sw1))
+    if vent_vel > 0:
+        velocidad_sw1_suave = suavizar_con_bordes(velocidad_sw1, vent_vel)
+        velocidad_sw2_suave = suavizar_con_bordes(velocidad_sw2, vent_vel)
+    else:
+        velocidad_sw1_suave = velocidad_sw1
+        velocidad_sw2_suave = velocidad_sw2
+
     promedio_v_sw1 = np.mean(velocidad_sw1)
     promedio_v_sw2 = np.mean(velocidad_sw2)
     velocidad_promedio = (promedio_v_sw1 + promedio_v_sw2) / 2
@@ -317,5 +324,9 @@ def ejecutar_simulacion(params):
         'posiciones_sw1': posiciones_sw1,
         'posiciones_sw2': posiciones_sw2,
         'x_teorico': x_teorico.tolist(),
-        'error_sw1': error_sw1.tolist()
+        'error_sw1': error_sw1.tolist(),
+        'velocidad_sw1': velocidad_sw1_suave.tolist(),
+        'velocidad_sw2': velocidad_sw2_suave.tolist(),
+        'tiempos_v': tiempos[1:], # Restamos el t=0 para igualar el tamaño de la velocidad
+        'velocidad_teorica_global': float(velocidad_teorica_global)
     }
