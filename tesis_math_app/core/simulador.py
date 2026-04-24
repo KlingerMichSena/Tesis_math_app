@@ -2,7 +2,6 @@
 # In[1]:
 import numpy as np
 import matplotlib.pyplot as plt
-from IPython.display import clear_output
 from scipy.linalg import solve_banded
 
 # Encapsulamos todo en una función que recibe un diccionario de parámetros
@@ -14,6 +13,8 @@ def ejecutar_simulacion(params):
     Tmax = params.get('Tmax', 5000)
     dt = params.get('dt', 1)
     Sw_inj = params.get('Sw_inj', 0.372)
+    Sw_star = params.get('Sw_star', 0.37)
+    window_size = params.get('window_size', 12) #Tamaño de ventana para suavizado
      
     # -------------------------------
     # PARÁMETROS Y CONDICIONES INICIALES
@@ -86,7 +87,7 @@ def ejecutar_simulacion(params):
         lg = k * krg(Sw, nD) / mu_g
         return lw / (lw + lg + 1e-12)
 
-    def suavizar_nD(nD, window_size=12):
+    def suavizar_nD(nD, window_size=window_size):
         nD_suave = nD.copy()
         for i in range(1, len(nD) - 1):
             ini = max(0, i - window_size // 2)
@@ -184,8 +185,9 @@ def ejecutar_simulacion(params):
         tiempos.append(t)
 
         # Animación
-        if step % 200 == 0 and step > 0:
-            clear_output(wait=True)
+        # Se desactiva la animación en consola porque Django es un entorno web 
+        # y clear_output/plt generan errores o consumen toda la memoria RAM.
+        """if step % 200 == 0 and step > 0:
 
             # Suavizar perfiles
             vent_espacial = 20
@@ -238,7 +240,7 @@ def ejecutar_simulacion(params):
             ax2.grid()
 
             plt.tight_layout()
-            #plt.show()
+            #plt.show()"""
 
     # -------------------------------
     # VELOCIDADES PROMEDIO DEL FRENTE
