@@ -6,16 +6,16 @@ from scipy.linalg import solve_banded
 
 # Encapsulamos todo en una función que recibe un diccionario de parámetros
 def ejecutar_simulacion(params):
-    # Extraer variables del diccionario (usando valores por defecto del script original)
-    phi = params.get('phi', 0.25)
-    k1 = params.get('k1', 2e-11)
-    k2 = params.get('k2', 10e-12)
-    Tmax = params.get('Tmax', 5000)
-    dt = params.get('dt', 1)
-    Sw_inj = params.get('Sw_inj', 0.372)
-    Sw_ini = params.get('Sw_ini', 0.72)
-    Sw_star = params.get('Sw_star', 0.37)
-    window_size = params.get('window_size', 12) #Tamaño de ventana para suavizado
+    # Extraer variables del diccionario provenientes de la interfaz
+    phi = params['phi']
+    k1 = params['k1']
+    k2 = params['k2']
+    Tmax = params['Tmax']
+    dt = params['dt']
+    Sw_inj = params['Sw_inj']
+    Sw_ini = params['Sw_ini']
+    Sw_star = params['Sw_star']
+    window_size = params['window_size'] #Tamaño de ventana para suavizado
      
     # -------------------------------
     # PARÁMETROS Y CONDICIONES INICIALES
@@ -63,10 +63,13 @@ def ejecutar_simulacion(params):
         return np.where(Sw > Sw_star, np.tanh(A * (Sw - Sw_star)), 0.0)
 
     def krw(Sw):
-        return np.where(Sw <= Swc, 0.0, 0.2 * ((Sw - Swc)/(1 - Swc - Sgr))**4.2)
+        # np.clip evita bases negativas antes de la potencia fraccionaria
+        base = np.clip((Sw - Swc)/(1 - Swc - Sgr), 0.0, None)
+        return np.where(Sw <= Swc, 0.0, 0.2 * base**4.2)
 
     def krg0(Sw):
-        return np.where(Sw >= 1 - Sgr, 0.0, 0.94 * ((1 - Sw - Sgr)/(1 - Swc - Sgr))**1.3)
+        base = np.clip((1 - Sw - Sgr)/(1 - Swc - Sgr), 0.0, None)
+        return np.where(Sw >= 1 - Sgr, 0.0, 0.94 * base**1.3)
 
     def MRF(nD):
         return np.clip(18500 * nD + 1, 1, 1e6)
@@ -316,17 +319,19 @@ def ejecutar_simulacion(params):
     #print("Error promedio Sw2:", np.mean(error_sw2))
 
 #RETORNO DE RESULTADOS (Lo que recibirá Django)
+# Forzamos la parte .real para asegurarnos de que no pasen números complejos a la web
     return {
-        'x': x.tolist(),
-        'Sw1': Sw1.tolist(),
-        'Sw2': Sw2.tolist(),
-        'tiempos': tiempos,
-        'posiciones_sw1': posiciones_sw1,
-        'posiciones_sw2': posiciones_sw2,
-        'x_teorico': x_teorico.tolist(),
-        'error_sw1': error_sw1.tolist(),
-        'velocidad_sw1': velocidad_sw1_suave.tolist(),
-        'velocidad_sw2': velocidad_sw2_suave.tolist(),
-        'tiempos_v': tiempos[1:], # Restamos el t=0 para igualar el tamaño de la velocidad
-        'velocidad_teorica_global': float(velocidad_teorica_global)
+        'x': np.real(x).tolist(),
+        'Sw1': np.real(Sw1).tolist(),
+        'Sw2': np.real(Sw2).tolist(),
+        'tiempos': np.real(tiempos).tolist(),
+        'posiciones_sw1': np.real(posiciones_sw1).tolist(),
+        'posiciones_sw2': np.real(posiciones_sw2).tolist(),
+        'x_teorico': np.real(x_teorico).tolist(),
+        'error_sw1': np.real(error_sw1).tolist(),
+        'error_sw2': np.real(error_sw2).tolist(),
+        'velocidad_sw1': np.real(velocidad_sw1_suave).tolist(),
+        'velocidad_sw2': np.real(velocidad_sw2_suave).tolist(),
+        'tiempos_v': np.real(tiempos[1:]).tolist(),
+        'velocidad_teorica_global': float(np.real(velocidad_teorica_global))
     }

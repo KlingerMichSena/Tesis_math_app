@@ -9,6 +9,9 @@ def index(request):
     form = SimuladorForm(request.POST or None)
     grafica_html = None
     grafica_velocidad_html = None
+    grafica_distancia_html = None
+    grafica_error_html = None
+    datos_json = None
 
     if request.method == 'POST' and form.is_valid():
         params = {
@@ -25,6 +28,9 @@ def index(request):
         
         # Ejecutar modelo matemático
         res = ejecutar_simulacion(params)
+        
+        # Convertir resultados a JSON para descargarlos en frontend
+        datos_json = json.dumps(res)
         
         # Crear la gráfica con Plotly
         fig = go.Figure()
@@ -59,8 +65,40 @@ def index(request):
         )
         grafica_velocidad_html = plot(fig_vel, output_type='div', include_plotlyjs=False)
 
+        # Crear la gráfica de Evolución de la distancia del frente con Plotly
+        fig_dist = go.Figure()
+        fig_dist.add_trace(go.Scatter(x=res['tiempos'], y=res['posiciones_sw1'], name='Frente capa 1 (Sw1)', line=dict(color='blue')))
+        fig_dist.add_trace(go.Scatter(x=res['tiempos'], y=res['posiciones_sw2'], name='Frente capa 2 (Sw2)', line=dict(color='green')))
+        fig_dist.add_trace(go.Scatter(x=res['tiempos'], y=res['x_teorico'], name='Modelo teórico', mode='lines', line=dict(color='black', dash='dash')))
+        
+        fig_dist.update_layout(
+            title="Evolución de la distancia del frente",
+            xaxis_title="Tiempo [s]",
+            yaxis_title="Distancia del frente [m]",
+            template="plotly_white"
+        )
+        
+        grafica_distancia_html = plot(fig_dist, output_type='div', include_plotlyjs=False)
+
+        # Crear la gráfica de Error Numérico con Plotly
+        fig_error = go.Figure()
+        fig_error.add_trace(go.Scatter(x=res['tiempos'], y=res['error_sw1'], name='Error capa 1 (Sw1)', line=dict(color='blue')))
+        fig_error.add_trace(go.Scatter(x=res['tiempos'], y=res['error_sw2'], name='Error capa 2 (Sw2)', line=dict(color='green')))
+        
+        fig_error.update_layout(
+            title="Error numérico del frente",
+            xaxis_title="Tiempo [s]",
+            yaxis_title="Error absoluto [m]",
+            template="plotly_white"
+        )
+        
+        grafica_error_html = plot(fig_error, output_type='div', include_plotlyjs=False)
+
     return render(request, 'web/index.html', {
         'form': form,
         'grafica': grafica_html,
-        'grafica_velocidad': grafica_velocidad_html
+        'grafica_velocidad': grafica_velocidad_html,
+        'grafica_distancia': grafica_distancia_html,
+        'grafica_error': grafica_error_html,
+        'datos_json': datos_json
     })

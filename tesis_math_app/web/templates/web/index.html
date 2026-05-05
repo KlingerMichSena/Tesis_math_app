@@ -1,7 +1,9 @@
 <!DOCTYPE html>
+{% load crispy_forms_tags %}
 <html lang="es">
 <head>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <meta charset="UTF-8">
     <title>Tesis Math App - Simulador</title>
     <style>
@@ -45,17 +47,17 @@
                     <div id="campos-crank">
                         <h4>Parámetros de Entrada</h4>
                         <div class="campos-grid">
-                            {{ form.k1.label_tag }} {{ form.k1 }}
-                            {{ form.k2.label_tag }} {{ form.k2 }}
+                            {{ form.k1|as_crispy_field }}
+                            {{ form.k2|as_crispy_field }}
                             <div style="margin-top: 10px; border-top: 1px solid #ccc; padding-top: 10px;">
-                                {{ form.phi.label_tag }} {{ form.phi }}
-                                {{ form.sw_star.label_tag }} {{ form.sw_star }}
-                                {{ form.window_size.label_tag }} {{ form.window_size }}
+                                {{ form.phi|as_crispy_field }}
+                                {{ form.sw_star|as_crispy_field }}
+                                {{ form.window_size|as_crispy_field }}
                             </div>
-                            {{ form.t_max.label_tag }} {{ form.t_max }}
-                            {{ form.dt.label_tag }} {{ form.dt }}
-                            {{ form.sw_inj.label_tag }} {{ form.sw_inj }}
-                            {{ form.sw_ini.label_tag }} {{ form.sw_ini }}
+                            {{ form.t_max|as_crispy_field }}
+                            {{ form.dt|as_crispy_field }}
+                            {{ form.sw_inj|as_crispy_field }}
+                            {{ form.sw_ini|as_crispy_field }}
                         </div>
                         
                         <button type="submit" name="ejecutar" class="btn-simular" style="background-color: #4DD161; color: white; width: 100%; margin-top: 20px; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">
@@ -74,11 +76,41 @@
             <h2>Visualización de Resultados</h2>
             <div id="grafica-area">
                 {% if grafica %}
-                    {{ grafica|safe }}
+                    <div>
+                        {{ grafica|safe }}
+                        <div style="text-align: right; margin-top: 5px;">
+                            <button class="btn btn-sm btn-outline-secondary" onclick="descargarArchivo('frente', 'csv')">⬇ Descargar CSV</button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="descargarArchivo('frente', 'txt')">⬇ Descargar TXT</button>
+                        </div>
+                    </div>
                     
                     {% if grafica_velocidad %}
                         <div class="mt-4" style="margin-top: 2rem;">
                             {{ grafica_velocidad|safe }}
+                            <div style="text-align: right; margin-top: 5px;">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="descargarArchivo('velocidad', 'csv')">⬇ Descargar CSV</button>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="descargarArchivo('velocidad', 'txt')">⬇ Descargar TXT</button>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    {% if grafica_distancia %}
+                        <div class="mt-4" style="margin-top: 2rem;">
+                            {{ grafica_distancia|safe }}
+                            <div style="text-align: right; margin-top: 5px;">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="descargarArchivo('distancia', 'csv')">⬇ Descargar CSV</button>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="descargarArchivo('distancia', 'txt')">⬇ Descargar TXT</button>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    {% if grafica_error %}
+                        <div class="mt-4" style="margin-top: 2rem;">
+                            {{ grafica_error|safe }}
+                            <div style="text-align: right; margin-top: 5px;">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="descargarArchivo('error', 'csv')">⬇ Descargar CSV</button>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="descargarArchivo('error', 'txt')">⬇ Descargar TXT</button>
+                            </div>
                         </div>
                     {% endif %}
                 {% else %}
@@ -90,5 +122,53 @@
         </div>
 
     </div>
+
+    {% if datos_json %}
+    <script>
+        // Cargamos los datos matemáticos que provienen de views.py
+        const datosSimulacion = JSON.parse('{{ datos_json|escapejs }}');
+
+        function descargarArchivo(tipo, formato) {
+            let contenido = '';
+            let nombreArchivo = tipo + '_simulacion.' + formato;
+            let sep = (formato === 'csv') ? ',' : '\t';
+
+            // Preparamos las columnas según la gráfica a descargar
+            if (tipo === 'frente') {
+                contenido += `Distancia(m)${sep}Sw1${sep}Sw2\n`;
+                for(let i = 0; i < datosSimulacion.x.length; i++){
+                    contenido += `${datosSimulacion.x[i]}${sep}${datosSimulacion.Sw1[i]}${sep}${datosSimulacion.Sw2[i]}\n`;
+                }
+            } else if (tipo === 'velocidad') {
+                contenido += `Tiempo(s)${sep}Velocidad_Sw1(m/s)${sep}Velocidad_Sw2(m/s)${sep}Velocidad_Teorica(m/s)\n`;
+                for(let i = 0; i < datosSimulacion.tiempos_v.length; i++){
+                    contenido += `${datosSimulacion.tiempos_v[i]}${sep}${datosSimulacion.velocidad_sw1[i]}${sep}${datosSimulacion.velocidad_sw2[i]}${sep}${datosSimulacion.velocidad_teorica_global}\n`;
+                }
+            } else if (tipo === 'distancia') {
+                contenido += `Tiempo(s)${sep}Posicion_Sw1(m)${sep}Posicion_Sw2(m)${sep}Modelo_Teorico(m)\n`;
+                for(let i = 0; i < datosSimulacion.tiempos.length; i++){
+                    contenido += `${datosSimulacion.tiempos[i]}${sep}${datosSimulacion.posiciones_sw1[i]}${sep}${datosSimulacion.posiciones_sw2[i]}${sep}${datosSimulacion.x_teorico[i]}\n`;
+                }
+            } else if (tipo === 'error') {
+                contenido += `Tiempo(s)${sep}Error_Sw1(m)${sep}Error_Sw2(m)\n`;
+                for(let i = 0; i < datosSimulacion.tiempos.length; i++){
+                    contenido += `${datosSimulacion.tiempos[i]}${sep}${datosSimulacion.error_sw1[i]}${sep}${datosSimulacion.error_sw2[i]}\n`;
+                }
+            }
+
+            // Forzamos la descarga del archivo en el navegador
+            const blob = new Blob([contenido], { type: 'text/plain;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = nombreArchivo;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+    {% endif %}
 </body>
 </html>
