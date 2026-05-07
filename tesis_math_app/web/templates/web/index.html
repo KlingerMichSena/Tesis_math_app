@@ -37,14 +37,14 @@
                     <select name="metodo" id="id_metodo" onchange="this.form.submit()" class="form-control">
                         <option value="">--- Seleccione ---</option>
                         <option value="CN" {% if form.cleaned_data.metodo == 'CN' %}selected{% endif %}>Crank-Nicolson</option>
-                        <option value="DF">Diferencias Finitas (Pendiente)</option>
+                        <option value="DF" {% if form.cleaned_data.metodo == 'DF' %}selected{% endif %}>Diferencias Finitas</option>
                     </select>
                 </div>
 
                 <hr>
 
-                {% if form.cleaned_data.metodo == 'CN' %}
-                    <div id="campos-crank">
+                {% if form.cleaned_data.metodo == 'CN' or form.cleaned_data.metodo == 'DF' %}
+                    <div id="campos-entrada">
                         <h4>Parámetros de Entrada</h4>
                         <div class="campos-grid">
                             {{ form.k1|as_crispy_field }}

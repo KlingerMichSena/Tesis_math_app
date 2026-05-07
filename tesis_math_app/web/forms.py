@@ -3,7 +3,7 @@ from django import forms
 class SimuladorForm(forms.Form):
     METODOS = [
         ('CN', 'Crank-Nicolson'),
-        ('DF', 'Diferencias Finitas (Próximamente)'),
+        ('DF', 'Diferencias Finitas'),
     ]
     
     metodo = forms.ChoiceField(

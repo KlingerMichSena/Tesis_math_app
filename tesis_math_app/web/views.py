@@ -4,6 +4,7 @@ import json
 from django.shortcuts import render
 from .forms import SimuladorForm
 from core.simulador import ejecutar_simulacion
+from core.df_simulador import ejecutar_simulacion_df
 
 def index(request):
     form = SimuladorForm(request.POST or None)
@@ -27,7 +28,10 @@ def index(request):
         }
         
         # Ejecutar modelo matemático
-        res = ejecutar_simulacion(params)
+        if form.cleaned_data['metodo'] == 'CN':
+            res = ejecutar_simulacion(params)
+        else:
+            res = ejecutar_simulacion_df(params)
         
         # Convertir resultados a JSON para descargarlos en frontend
         datos_json = json.dumps(res)

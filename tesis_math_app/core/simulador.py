@@ -1,5 +1,6 @@
 
 # In[1]:
+# CODIGO USANDO CRANCK NICOLSON
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.linalg import solve_banded
