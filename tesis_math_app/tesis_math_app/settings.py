@@ -52,6 +52,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# Backend de autenticación personalizado para usar email en lugar de username
+AUTHENTICATION_BACKENDS = [
+    'web.backends.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend', # Mantener para el login de admin
+]
+
 ROOT_URLCONF = 'tesis_math_app.urls'
 
 TEMPLATES = [
@@ -77,8 +83,12 @@ WSGI_APPLICATION = 'tesis_math_app.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'tesis_math_db',
+        'USER': 'postgres',
+        'PASSWORD': '1105360123',
+        'HOST': 'localhost', # o la IP de tu servidor de BD
+        'PORT': '5432',      # El puerto por defecto de PostgreSQL
     }
 }
 
@@ -122,3 +132,12 @@ STATIC_URL = 'static/'
 # Framework de CSS para formularios
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+# URL a la que se redirige después de un login exitoso.
+LOGIN_REDIRECT_URL = 'simulador'
+
+# URL de la página de login.
+LOGIN_URL = 'login'
+
+# Modelo de usuario personalizado
+AUTH_USER_MODEL = 'web.CustomUser'

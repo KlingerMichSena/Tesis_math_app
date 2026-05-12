@@ -2,10 +2,12 @@ import plotly.graph_objects as go
 from plotly.offline import plot
 import json
 from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 from .forms import SimuladorForm
 from core.simulador import ejecutar_simulacion
 from core.df_simulador import ejecutar_simulacion_df
 
+@login_required
 def index(request):
     form = SimuladorForm(request.POST or None)
     grafica_html = None
