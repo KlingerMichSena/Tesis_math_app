@@ -129,6 +129,11 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# Directorios donde Django buscará archivos estáticos adicionales
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
 # Framework de CSS para formularios
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
