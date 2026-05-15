@@ -17,25 +17,24 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
+from web import views as web_views
 from web.forms import CustomAuthenticationForm
 
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    # 1. La ruta raíz ahora muestra la vista de login de Django.
-    #    Usará tu plantilla 'web/login.html'.
+    # Ruta para el registro de nuevos usuarios (más específica, va primero).
+    path('registro/', web_views.register_view, name='registro'),
+
+    # Ruta para el proceso de logout.
+    path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
+
+    # La ruta raíz (login) DEBE ir al final para que no intercepte a las demás.
     path('', auth_views.LoginView.as_view(
         template_name='web/login.html',
         authentication_form=CustomAuthenticationForm
     ), name='login'),
 
-    # 2. Ruta para el proceso de logout.
-    path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
-
-    # 3. Incluimos las URLs de la app 'web' (como /simulador/).
-    path('', include('web.urls')),
-    
-    # Aquí puedes agregar las rutas para 'registro' y 'recuperar_contrasena'
-    # path('registro/', views.registro_view, name='registro'),
-    # path('recuperar-contrasena/', views.recuperar_view, name='recuperar_contrasena'),
+    # Ruta de la aplicación principal (antes en web.urls)
+    path('simulador/', web_views.index, name='simulador'),
 ]

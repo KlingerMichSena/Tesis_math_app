@@ -2,10 +2,27 @@ import plotly.graph_objects as go
 from plotly.offline import plot
 import json
 from django.shortcuts import render
+from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
-from .forms import SimuladorForm
+from django.contrib import messages
+from .forms import SimuladorForm, CustomUserCreationForm
 from core.simulador import ejecutar_simulacion
 from core.df_simulador import ejecutar_simulacion_df
+
+def register_view(request):
+    # Si el usuario ya está autenticado, lo redirigimos al simulador
+    #if request.user.is_authenticated:
+     #   return redirect('simulador')
+
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, '¡Cuenta creada exitosamente! Ahora puedes iniciar sesión.')
+            return redirect('login')
+    else:
+        form = CustomUserCreationForm()
+    return render(request, 'web/register.html', {'form': form})
 
 @login_required
 def index(request):
@@ -67,7 +84,8 @@ def index(request):
             title="Velocidad Promedio de Frentes",
             xaxis_title="Tiempo [s]",
             yaxis_title="Velocidad (v) [m/s]",
-            template="plotly_white"
+            template="plotly_white",
+            xaxis_range=[0, params['Tmax']] # Limitar el eje X al tiempo máximo de la simulación
         )
         grafica_velocidad_html = plot(fig_vel, output_type='div', include_plotlyjs=False)
 

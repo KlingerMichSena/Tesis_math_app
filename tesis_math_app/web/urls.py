@@ -2,6 +2,5 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # Esta URL corresponderá a /simulador/ y mostrará la interfaz principal
-    path('simulador/', views.index, name='simulador'),
+    # Esta URL ahora se maneja en el archivo urls.py principal del proyecto para evitar ambigüedades.
 ]

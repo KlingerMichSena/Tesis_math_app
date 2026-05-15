@@ -1,18 +1,6 @@
 from django import forms
-from django.contrib.auth.forms import AuthenticationForm
-
-class CustomAuthenticationForm(AuthenticationForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Personalizamos el campo 'username' para que funcione como un campo de email.
-        self.fields['username'].label = "Correo Electrónico"
-        # Reemplazamos el widget por un EmailInput para asegurar el tipo de campo HTML.
-        # Esto es más limpio que modificar el atributo 'input_type' de una instancia.
-        self.fields['username'].widget = forms.EmailInput(attrs={
-            'class': 'form-control mb-2', 'placeholder': 'correo@ejemplo.com', 'autofocus': True
-        })
-        self.fields['password'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Contraseña'})
-
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from .models import CustomUser
 
 class SimuladorForm(forms.Form):
     METODOS = [
@@ -39,4 +27,27 @@ class SimuladorForm(forms.Form):
                                     initial=12,
                                     help_text='Tamaño de ventana para suavizado de nD'
                                     )
-    
+
+class CustomAuthenticationForm(AuthenticationForm):
+    """
+    Formulario de autenticación personalizado para cambiar la etiqueta de 'username' a 'Email'.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['username'].label = "Correo Electrónico"
+        self.fields['username'].widget.attrs.update(
+            {'placeholder': 'correo@ejemplo.com'}
+        )
+
+class CustomUserCreationForm(UserCreationForm):
+    """
+    Formulario para la creación de nuevos usuarios personalizados.
+    Hereda de UserCreationForm para manejar la validación de contraseñas.
+    """
+    class Meta:
+        model = CustomUser
+        # Campos que se mostrarán en el formulario de registro.
+        # UserCreationForm añade automáticamente los campos de contraseña.
+        # Es importante incluir el campo definido en USERNAME_FIELD ('email').
+        fields = ('email', 'nombres', 'apellidos', 'rol')
+
