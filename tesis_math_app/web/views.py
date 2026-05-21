@@ -43,7 +43,8 @@ def index(request):
             'Sw_ini': form.cleaned_data['sw_ini'],
             'phi': form.cleaned_data['phi'],
             'Sw_star': form.cleaned_data['sw_star'],
-            'window_size': form.cleaned_data['window_size']
+            'window_size': form.cleaned_data['window_size'],
+            'paso_animacion': form.cleaned_data['paso_animacion'],
         }
         
         # Ejecutar modelo matemático
@@ -52,19 +53,66 @@ def index(request):
         else:
             res = ejecutar_simulacion_df(params)
         
-        # Convertir resultados a JSON para descargarlos en frontend
-        datos_json = json.dumps(res)
+        # Excluir los datos de animación del JSON para descarga, que es muy pesado.
+        datos_para_descarga = {k: v for k, v in res.items() if k != 'animation_frames'}
+        datos_json = json.dumps(datos_para_descarga)
         
         # Crear la gráfica con Plotly
         fig = go.Figure()
-        fig.add_trace(go.Scatter(x=res['x'], y=res['Sw1'], name='Capa 1 (Sw1)', line=dict(color='#4DD161')))
-        fig.add_trace(go.Scatter(x=res['x'], y=res['Sw2'], name='Capa 2 (Sw2)', line=dict(color='#4DBDD1')))
+
+        # --- Lógica para Gráfica Animada ---
+        animation_frames = res.get('animation_frames', [])
+        if animation_frames:
+            # Usar el primer cuadro como estado inicial de la gráfica
+            initial_frame_data = animation_frames[0]
+            fig.add_trace(go.Scatter(x=res['x'], y=initial_frame_data['Sw1'], name='Capa 1 (Sw1)', line=dict(color='#4DD161')))
+            fig.add_trace(go.Scatter(x=res['x'], y=initial_frame_data['Sw2'], name='Capa 2 (Sw2)', line=dict(color='#4DBDD1')))
+
+            # Crear los cuadros (frames) para la animación
+            frames = []
+            for frame_data in animation_frames:
+                frame = go.Frame(
+                    data=[
+                        go.Scatter(x=res['x'], y=frame_data['Sw1']),
+                        go.Scatter(x=res['x'], y=frame_data['Sw2'])
+                    ],
+                    name=f"{frame_data['t']:.1f}" # Nombre del cuadro, usado por el slider
+                )
+                frames.append(frame)
+            fig.frames = frames
+
+            # Configurar los botones de Play/Pause y el slider
+            fig.update_layout(
+                updatemenus=[{
+                    'type': 'buttons',
+                    'buttons': [
+                        {'label': 'Play', 'method': 'animate', 'args': [None, {'frame': {'duration': 50, 'redraw': True}, 'fromcurrent': True, 'transition': {'duration': 0}}]},
+                        {'label': 'Pause', 'method': 'animate', 'args': [[None], {'frame': {'duration': 0, 'redraw': False}, 'mode': 'immediate'}]}
+                    ],
+                    'direction': 'left', 'pad': {'r': 10, 't': 70}, 'showactive': False, 'x': 0.1, 'xanchor': 'right', 'y': 0, 'yanchor': 'top'
+                }],
+                sliders=[{
+                    'active': 0,
+                    'steps': [{'label': f.name + 's', 'method': 'animate', 'args': [[f.name], {'frame': {'duration': 100, 'redraw': True}, 'mode': 'immediate'}]} for f in fig.frames],
+                    'transition': {'duration': 10},
+                    'currentvalue': {'prefix': 'Tiempo: ', 'visible': True, 'xanchor': 'right'},
+                    'pad': {'t': 20, 'b': 10},
+                    'len': 0.9, 'x': 0.05, 'y': 0, 'yanchor': 'top'
+                }]
+            )
+        else:
+            # Fallback si no hay datos de animación
+            fig.add_trace(go.Scatter(x=res['x'], y=res['Sw1'], name='Capa 1 (Sw1)', line=dict(color='#4DD161')))
+            fig.add_trace(go.Scatter(x=res['x'], y=res['Sw2'], name='Capa 2 (Sw2)', line=dict(color='#4DBDD1')))
         
         fig.update_layout(
-            title="Perfiles de Frente",
+            title="Perfiles de Frente (Animado)",
             xaxis_title="Distancia [m]",
             yaxis_title="Saturación (Sw)",
-            template="plotly_white"
+            template="plotly_white",
+            # Asegurar que los ejes no cambien durante la animación
+            xaxis={'range': [0, res['x'][-1]]},
+            yaxis={'range': [min(params['Sw_inj'], params['Sw_ini']) - 0.1, max(params['Sw_inj'], params['Sw_ini']) + 0.1]}
         )
 
         # Convertir la figura a HTML para insertarla en el template
