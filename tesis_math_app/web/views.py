@@ -133,7 +133,7 @@ def index(request):
             xaxis_title="Tiempo [s]",
             yaxis_title="Velocidad (v) [m/s]",
             template="plotly_white",
-            xaxis_range=[0, params['Tmax']] # Limitar el eje X al tiempo máximo de la simulación
+            xaxis_range=[0, params['Tmax'] - 100] # Limitar el eje X al tiempo máximo de la simulación
         )
         grafica_velocidad_html = plot(fig_vel, output_type='div', include_plotlyjs=False)
 

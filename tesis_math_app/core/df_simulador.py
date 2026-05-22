@@ -121,7 +121,7 @@ def ejecutar_simulacion_df(params):
             + theta_s * (Sw1[1:-1] - Sw2[1:-1])
             + diff_coef_Sw2 * (Sw2[2:] - 2*Sw2[1:-1] + Sw2[:-2]) / dx**2
         )
-        
+
         # Condiciones de frontera
         Sw1_new[0] = Sw_inj
         Sw2_new[0] = Sw_inj
