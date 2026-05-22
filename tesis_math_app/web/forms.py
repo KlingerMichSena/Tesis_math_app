@@ -19,6 +19,11 @@ class SimuladorForm(forms.Form):
     k2 = forms.FloatField(label='Permeabilidad Capa 2 (k2)', initial=10e-12, widget=forms.TextInput)
     t_max = forms.IntegerField(label='Tiempo Máximo (s)', initial=5000)
     dt = forms.FloatField(label='Paso de tiempo (dt)', initial=1.0, widget=forms.TextInput)
+    paso_animacion = forms.IntegerField(
+        label='Intervalo de Animación (pasos)',
+        initial=100,
+        help_text='Guarda un cuadro para la animación cada N pasos de tiempo. Afecta la fluidez vs. rendimiento.'
+    )
     sw_inj = forms.FloatField(label='Saturación Inyección', initial=0.372, widget=forms.TextInput)
     sw_ini = forms.FloatField(label='Saturación Inicial', initial=0.72, widget=forms.TextInput)
     phi = forms.FloatField(label='Porosidad (phi)', initial=0.25, widget=forms.TextInput)
@@ -50,4 +55,3 @@ class CustomUserCreationForm(UserCreationForm):
         # UserCreationForm añade automáticamente los campos de contraseña.
         # Es importante incluir el campo definido en USERNAME_FIELD ('email').
         fields = ('email', 'nombres', 'apellidos', 'rol')
-

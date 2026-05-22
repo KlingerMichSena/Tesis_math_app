@@ -17,6 +17,7 @@ def ejecutar_simulacion(params):
     Sw_ini = params['Sw_ini']
     Sw_star = params['Sw_star']
     window_size = params['window_size'] #Tamaño de ventana para suavizado
+    paso_animacion = params['paso_animacion']
      
     # -------------------------------
     # PARÁMETROS Y CONDICIONES INICIALES
@@ -55,6 +56,7 @@ def ejecutar_simulacion(params):
     posiciones_sw1 = []
     posiciones_sw2 = []
     tiempos = []
+    animation_frames = []
     valor_frente = (Sw_inj + Sw_ini) / 2
 
     # -------------------------------
@@ -151,6 +153,9 @@ def ejecutar_simulacion(params):
     A1 = construir_matriz_CN(Nx, D1, phi, dt, dx)
     A2 = construir_matriz_CN(Nx, D2, phi, dt, dx)
 
+    # Guardar estado inicial para animación (t=0)
+    animation_frames.append({'t': 0, 'Sw1': np.real(Sw1).tolist(), 'Sw2': np.real(Sw2).tolist()})
+
     for step in range(Nt):
         t = step * dt
 
@@ -177,6 +182,11 @@ def ejecutar_simulacion(params):
 
         Sw1[0] = Sw_inj
         Sw2[0] = Sw_inj
+
+        # Guardar cuadro de animación en el intervalo definido
+        # El tiempo es t + dt porque Sw1/Sw2 ya fueron actualizados para el siguiente paso
+        if (step + 1) % paso_animacion == 0:
+            animation_frames.append({'t': t + dt, 'Sw1': np.real(Sw1).tolist(), 'Sw2': np.real(Sw2).tolist()})
 
         # Seguimiento de la posición
         posiciones_sw1.append(estimar_frente(Sw1, x, valor_frente))
@@ -325,6 +335,7 @@ def ejecutar_simulacion(params):
         'x': np.real(x).tolist(),
         'Sw1': np.real(Sw1).tolist(),
         'Sw2': np.real(Sw2).tolist(),
+        'animation_frames': animation_frames,
         'tiempos': np.real(tiempos).tolist(),
         'posiciones_sw1': np.real(posiciones_sw1).tolist(),
         'posiciones_sw2': np.real(posiciones_sw2).tolist(),

@@ -12,7 +12,7 @@ def ejecutar_simulacion_df(params):
     Sw_ini = params['Sw_ini']
     Sw_star = params['Sw_star']
     window_size = params['window_size'] #Tamaño de ventana para suavizado
-     
+    paso_animacion = params['paso_animacion']
     # -------------------------------
     # PARÁMETROS Y CONDICIONES INICIALES
     # -------------------------------
@@ -32,11 +32,11 @@ def ejecutar_simulacion_df(params):
     dx = L / Nx
     Nt = int(Tmax / dt)
 
-    Sw1_all = np.ones((Nt, Nx)) * Sw_ini
-    Sw2_all = np.ones((Nt, Nx)) * Sw_ini
-    Sw1_all[0, 0] = Sw_inj
-    Sw2_all[0, 0] = Sw_inj
-
+    # Usar solo el paso anterior para eficiencia de memoria
+    Sw1 = np.ones(Nx) * Sw_ini
+    Sw2 = np.ones(Nx) * Sw_ini
+    Sw1[0] = Sw_inj
+    Sw2[0] = Sw_inj
     diff_coef_Sw1 = 0.001 * dx**2 / dt
     diff_coef_Sw2 = 0.001 * dx**2 / dt
 
@@ -85,15 +85,22 @@ def ejecutar_simulacion_df(params):
     # -------------------------------
     # SIMULACIÓN
     # -------------------------------
-    tiempos = [0.0]
+    tiempos = []
+    posiciones_sw1 = []
+    posiciones_sw2 = []
+    animation_frames = []
+    valor_frente = (Sw_inj + Sw_ini) / 2
+
+    # Guardar estado inicial
+    tiempos.append(0.0)
+    posiciones_sw1.append(estimar_frente(Sw1, x, valor_frente))
+    posiciones_sw2.append(estimar_frente(Sw2, x, valor_frente))
+    animation_frames.append({'t': 0.0, 'Sw1': np.real(Sw1).tolist(), 'Sw2': np.real(Sw2).tolist()})
 
     for step in range(1, Nt):
         t = step * dt
-        tiempos.append(t)
-        
-        Sw1 = Sw1_all[step-1]
-        Sw2 = Sw2_all[step-1]
 
+        # Sw1 y Sw2 son del paso anterior
         nD1 = nD_eq(Sw1)
         nD2 = nD_eq(Sw2)
         fw1 = fw(Sw1, nD1, k1)
@@ -103,17 +110,17 @@ def ejecutar_simulacion_df(params):
         Sw2_new = Sw2.copy()
 
         # Vectorización (reemplaza el ciclo for para acelerar)
-        Sw1_new[1:-1] = Sw1[1:-1] + dt * (
+        Sw1_new[1:-1] = Sw1[1:-1] + (dt / phi) * (
             - u1 * (fw1[1:-1] - fw1[:-2]) / dx
             - theta_s * (Sw1[1:-1] - Sw2[1:-1])
             + diff_coef_Sw1 * (Sw1[2:] - 2*Sw1[1:-1] + Sw1[:-2]) / dx**2
-        ) / phi
+        )
 
-        Sw2_new[1:-1] = Sw2[1:-1] + dt * (
+        Sw2_new[1:-1] = Sw2[1:-1] + (dt / phi) * (
             - u2 * (fw2[1:-1] - fw2[:-2]) / dx
             + theta_s * (Sw1[1:-1] - Sw2[1:-1])
             + diff_coef_Sw2 * (Sw2[2:] - 2*Sw2[1:-1] + Sw2[:-2]) / dx**2
-        ) / phi
+        )
 
         # Condiciones de frontera
         Sw1_new[0] = Sw_inj
@@ -121,21 +128,23 @@ def ejecutar_simulacion_df(params):
         Sw1_new[-1] = Sw1_new[-2]
         Sw2_new[-1] = Sw2_new[-2]
 
-        Sw1_all[step] = Sw1_new
-        Sw2_all[step] = Sw2_new
+        # Actualizar para la siguiente iteración
+        Sw1 = Sw1_new
+        Sw2 = Sw2_new
 
-    Sw1_final = Sw1_all[-1]
-    Sw2_final = Sw2_all[-1]
+        # Guardar datos para este paso de tiempo 't'
+        tiempos.append(t)
+        posiciones_sw1.append(estimar_frente(Sw1, x, valor_frente))
+        posiciones_sw2.append(estimar_frente(Sw2, x, valor_frente))
+
+        if step % paso_animacion == 0:
+            animation_frames.append({'t': t, 'Sw1': np.real(Sw1).tolist(), 'Sw2': np.real(Sw2).tolist()})
+
+    Sw1_final = Sw1
+    Sw2_final = Sw2
 
     # -------------------------------
     # VELOCIDADES PROMEDIO DEL FRENTE
-    # -------------------------------
-    valor_frente = (Sw_inj + Sw_ini) / 2
-    posiciones_sw1 = [estimar_frente(Sw1_all[i], x, valor_frente) for i in range(Nt)]
-    posiciones_sw2 = [estimar_frente(Sw2_all[i], x, valor_frente) for i in range(Nt)]
-
-    # -------------------------------
-    # Velocidades promedio del frente
     # -------------------------------
     velocidad_sw1 = np.diff(posiciones_sw1) / dt
     velocidad_sw2 = np.diff(posiciones_sw2) / dt
@@ -178,6 +187,7 @@ def ejecutar_simulacion_df(params):
         'x': np.real(x).tolist(),
         'Sw1': np.real(Sw1_final).tolist(),
         'Sw2': np.real(Sw2_final).tolist(),
+        'animation_frames': animation_frames,
         'tiempos': np.real(tiempos).tolist(),
         'posiciones_sw1': np.real(posiciones_sw1).tolist(),
         'posiciones_sw2': np.real(posiciones_sw2).tolist(),
