@@ -8,7 +8,7 @@ class CustomUserManager(BaseUserManager):
     """
     def create_user(self, email, password, **extra_fields):
         if not email:
-            raise ValueError(_('El campo Email es obligatorio'))
+            raise ValueError(_('El campo Correo Electrónico es obligatorio'))
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
@@ -45,7 +45,7 @@ class CustomUser(AbstractUser):
     # Campos requeridos al crear un usuario por consola (createsuperuser)
     REQUIRED_FIELDS = ['nombres', 'apellidos']
 
-    objects = CustomUserManager()
+    objects = CustomUserManager() # type: ignore
 
     def __str__(self):
         return self.email
