@@ -43,15 +43,37 @@ class CustomAuthenticationForm(AuthenticationForm):
         self.fields['username'].widget.attrs.update(
             {'placeholder': 'correo@ejemplo.com'}
         )
+        self.fields['password'].label = "Contraseña"
 
 class CustomUserCreationForm(UserCreationForm):
     """
     Formulario para la creación de nuevos usuarios personalizados.
     Hereda de UserCreationForm para manejar la validación de contraseñas.
     """
-    class Meta:
+    password1 = forms.CharField(
+        label="Contraseña",
+        widget=forms.PasswordInput,
+        help_text="La contraseña debe tener al menos 8 caracteres."
+    )
+    password2 = forms.CharField(
+        label="Confirmar contraseña",
+        widget=forms.PasswordInput,
+        help_text="Ingresa de nuevo la contraseña para verificarla."
+    )
+
+    class Meta(UserCreationForm.Meta):
         model = CustomUser
         # Campos que se mostrarán en el formulario de registro.
         # UserCreationForm añade automáticamente los campos de contraseña.
         # Es importante incluir el campo definido en USERNAME_FIELD ('email').
         fields = ('email', 'nombres', 'apellidos', 'rol')
+        labels = {
+            'email': 'Correo Electrónico',
+            'nombres': 'Nombres',
+            'apellidos': 'Apellidos',
+            'rol': 'Rol'
+        }
+
+        
+
+        
