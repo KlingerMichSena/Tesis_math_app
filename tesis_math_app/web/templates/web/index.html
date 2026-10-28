@@ -11,11 +11,40 @@
             --verde-principal: #4DD161;
             --azul-acento: #4DBDD1;
         }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; }
-        header { background-color: var(--verde-principal); color: white; padding: 1rem; text-align: center; }
-        .container-fluid { display: flex; flex: 1; }
-        .sidebar { width: 320px; background-color: #f4f4f4; padding: 20px; border-right: 3px solid var(--azul-acento); }
-        .main-content { flex: 1; padding: 20px; text-align: center; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh;
+            overflow: hidden; 
+        }
+        header { 
+            background-color: var(--verde-principal);
+             color: white; 
+             padding: 1rem; 
+             text-align: center; 
+             flex-shrink: 0;
+        }
+        .container-fluid { 
+            display: flex; 
+            flex: 1; 
+            overflow: hidden;
+        }
+        .sidebar { 
+            width: 320px; 
+            background-color: #f4f4f4; 
+            padding: 20px; 
+            border-right: 3px solid var(--azul-acento);
+            overflow-y: auto;
+            height: 100%;
+        }
+        .main-content { 
+            flex: 1; padding: 20px; 
+            text-align: center; 
+            overflow-y: auto;
+            height: 100%;
+        }
         .btn-simular { background-color: var(--verde-principal); border: none; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
@@ -24,7 +53,7 @@
         <h1>Simulador de Fluidos en Medios Porosos</h1>
     </header>
 
-    <div class="container-fluid p-0" style="display: flex;">
+    <div class="container-fluid p-0">
         
         <div class="sidebar" style="width: 320px; background-color: #f8f9fa; padding: 20px; border-right: 3px solid #4DBDD1;">
             <h3>Configuración del Modelo</h3>
@@ -71,6 +100,15 @@
             {% if mensaje %}
                 <p style="color: #d9534f; margin-top: 15px;">{{ mensaje }}</p>
             {% endif %}
+
+            <hr class="my-4">
+            <form action="{% url 'logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger w-100">
+                    🚪 Cerrar Sesión
+                </button>
+            </form>
+
         </div>
 
         <div class="main-content">
